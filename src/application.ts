@@ -1,15 +1,16 @@
-import { User } from 'discord.js';
+import { DiscordAPIError, User } from 'discord.js';
 import puppeteer, { Page } from 'puppeteer';
 import { Order } from './models/order.model';
 
 const FILE = 'data.json';
 
 export class Application {
-    protected fs: any;
     protected data: {
         orders: Order[],
         lastRun: string,
     };
+    protected discordClient: any;
+    protected fs: any;
 
     constructor() {
         this.fs = require('fs');
@@ -26,6 +27,13 @@ export class Application {
 
         // Load db file
         this.data = JSON.parse(this.fs.readFileSync(FILE));
+
+        // Setup Discord
+        if(process.env.DISCORD_TOKEN) {
+            const Discord = require('discord.js');
+            this.discordClient = new Discord.Client();
+            this.discordClient.login(process.env.DISCORD_TOKEN);
+        }
     }
 
     public async run (): Promise<void> {
@@ -71,7 +79,7 @@ export class Application {
                     this.notifyOnSlack(order);
                 }
 
-                if(process.env.DISCORD_TOKEN && order.discordUserId) {
+                if(order.discordUserId) {
                     console.log(`Should notify on Discord`);
 
                     this.notifyOnDiscord(order);
@@ -80,8 +88,8 @@ export class Application {
         }
 
         // Store last run
-        let tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
-        let localISOTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0, -1);
+        const timezoneOffset = (new Date()).getTimezoneOffset() * 60000; // offset in milliseconds
+        const localISOTime = (new Date(Date.now() - timezoneOffset)).toISOString().slice(0, -1);
         this.data.lastRun = localISOTime;
 
         console.log(`Last run: ${localISOTime}`);
@@ -173,20 +181,13 @@ export class Application {
     }
 
     notifyOnDiscord(order: Order): void {
-        if(process.env.DISCORD_TOKEN && order.discordUserId && order.queueNr) {
+        if(this.discordClient !== undefined && order.discordUserId && order.queueNr) {
             console.log(`Should notify on Discord v2`);
 
-            const Discord = require('discord.js');
-            const client = new Discord.Client();
 
-            client.on('ready', async () => {
-                const user: User = await client.users.fetch(order.discordUserId);
+            this.discordClient.on('ready', async () => {
+                const user: User = await this.discordClient.users.fetch(order.discordUserId);
                 await user.send(`Order ${order.orderNr} (${order.type}) | Queue nr: ${order.queueNr}`);
-
-                client.destroy();
-            });
-
-            client.login(process.env.DISCORD_TOKEN);
         }
     }
 }
