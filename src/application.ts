@@ -1,4 +1,4 @@
-import { DiscordAPIError, User } from 'discord.js';
+import { User } from 'discord.js';
 import puppeteer, { Page } from 'puppeteer';
 import { Order } from './models/order.model';
 
@@ -11,6 +11,8 @@ export class Application {
     };
     protected discordClient: any;
     protected fs: any;
+    protected discordOrdersToNotify: Order[] = [];
+    protected slackOrdersToNotify: Order[] = [];
 
     constructor() {
         this.fs = require('fs');
@@ -32,7 +34,6 @@ export class Application {
         if(process.env.DISCORD_TOKEN) {
             const Discord = require('discord.js');
             this.discordClient = new Discord.Client();
-            this.discordClient.login(process.env.DISCORD_TOKEN);
         }
     }
 
@@ -73,18 +74,23 @@ export class Application {
             if(order.queueNr === undefined || order.queueNr !== queueNr) {
                 order.queueNr = queueNr;
 
-                // Send notifications
+                // Store notifications
                 if(order.slackWebhookUrl && order.slackChannel) {
-                    console.log(`Should notify on Slack`);
-                    this.notifyOnSlack(order);
+                    this.slackOrdersToNotify.push(order);
                 }
 
                 if(order.discordUserId) {
-                    console.log(`Should notify on Discord`);
-
-                    this.notifyOnDiscord(order);
+                    this.discordOrdersToNotify.push(order);
                 }
             }
+        }
+
+        if(this.slackOrdersToNotify.length) {
+            this.notifyOnSlack(this.slackOrdersToNotify);
+        }
+
+        if(this.discordOrdersToNotify.length) {
+            this.notifyOnDiscord(this.discordOrdersToNotify);
         }
 
         // Store last run
@@ -94,7 +100,7 @@ export class Application {
 
         console.log(`Last run: ${localISOTime}`);
 
-        // Store queue nrs in db file
+        // Store data back in db file
         this.fs.writeFileSync(FILE, JSON.stringify(this.data));
 
         process.exit();
@@ -160,35 +166,42 @@ export class Application {
         });
     }
 
-    notifyOnSlack(order: Order): void {
-        if(order.slackWebhookUrl && order.slackChannel && order.queueNr) {
-            console.log(`Should notify on Slack v2`);
+    notifyOnSlack(orders: Order[]): void {
+        for(const order of this.data.orders) {
+            if(order.slackWebhookUrl && order.slackChannel && order.queueNr) {
+                const slack = require('slack-notify')(order.slackWebhookUrl);
 
-            const slack = require('slack-notify')(order.slackWebhookUrl);
-
-            slack.note({
-                channel: order.slackChannel,
-                username: 'Alternate Scraper',
-                icon_emoji: ':compouter:',
-                text: `Queue position update`,
-                fields: {
-                    'Queue': order.type,
-                    'Order': order.orderNr,
-                    'Position': order.queueNr,
-                },
-            });
+                slack.note({
+                    channel: order.slackChannel,
+                    text: `Queue position update`,
+                    fields: {
+                        'Queue': order.type,
+                        'Order': order.orderNr,
+                        'Position': order.queueNr,
+                    },
+                });
+            }
         }
     }
 
-    notifyOnDiscord(order: Order): void {
-        if(this.discordClient !== undefined && order.discordUserId && order.queueNr) {
-            console.log(`Should notify on Discord v2`);
-
-
+    notifyOnDiscord(orders: Order[]): void {
+        if(this.discordClient !== undefined) {
             this.discordClient.on('ready', async () => {
-                const user: User = await this.discordClient.users.fetch(order.discordUserId);
-                await user.send(`Order ${order.orderNr} (${order.type}) | Queue nr: ${order.queueNr}`);
+                for(const order of orders) {
+                    if(order.discordUserId && order.queueNr) {
+                        try {
+                            const user: User = await this.discordClient.users.fetch(order.discordUserId);
+                            await user.send(`Order ${order.orderNr} (${order.type}) | Queue nr: ${order.queueNr}`);
+
+                            console.log(`Message sent to ${user.username} (${user.id})`);
+                        } catch (error) {
+                            console.error('Discord message error: ', error);
+                        }
+                    }
+                }
             });
+
+            this.discordClient.login(process.env.DISCORD_TOKEN);
         }
     }
 }
