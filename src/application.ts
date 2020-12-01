@@ -188,6 +188,7 @@ export class Application {
             this.discordClient.on('ready', async () => {
                 const user: User = await this.discordClient.users.fetch(order.discordUserId);
                 await user.send(`Order ${order.orderNr} (${order.type}) | Queue nr: ${order.queueNr}`);
+            });
         }
     }
 }
