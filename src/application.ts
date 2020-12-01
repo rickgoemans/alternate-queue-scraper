@@ -53,15 +53,22 @@ export class Application {
 
             console.log(`Order ${order.orderNr} (${order.type}) | Queue nr: ${queueNr}`);
 
-            if(order.queueNr === undefined || order.queueNr != queueNr) {
+            if(isNaN(queueNr)) {
+                return;
+            }
+
+            if(order.queueNr === undefined || order.queueNr !== queueNr) {
                 order.queueNr = queueNr;
 
                 // Send notifications
                 if(order.slackWebhookUrl && order.slackChannel) {
+                    console.log('Should notify on slack');
                     this.notifyOnSlack(order);
                 }
 
                 if(process.env.DISCORD_TOKEN && order.discordUserId) {
+                    console.log('Should notify on slack');
+
                     this.notifyOnDiscord(order);
                 }
             }
@@ -80,31 +87,23 @@ export class Application {
         process.exit();
     }
 
-    protected async checkNvidiaGpuOrderQueueNr(page: Page, orderNr: number, zipcode: string): Promise<number> {
-        console.log('Checking Nvidia GPU order queue');
-        console.log('Order nr:', orderNr);
-        console.log('Zipcode: ', zipcode);
-
-        return this.checkQueueNr(page, 'https://include.alternate.nl/3080', 'http://include.alternate.nl/3080/check.php', orderNr, zipcode);
+    protected async checkNvidiaGpuOrderQueueNr(page: Page, order: Order): Promise<number> {
+        return this.checkQueueNr(page, 'https://include.alternate.nl/3080', 'http://include.alternate.nl/3080/check.php', order);
     }
 
-    protected async checkAmdCpuOrderQueueNr(page: Page, orderNr: number, zipcode: string): Promise<number> {
-        console.log('Checking AMD CPU order queue');
-        console.log('Order nr:', orderNr);
-        console.log('Zipcode: ', zipcode);
-
-        return await this.checkQueueNr(page, 'https://include.alternate.nl/ryzen5000', 'http://include.alternate.nl/ryzen5000/check.php', orderNr, zipcode);
+    protected async checkAmdCpuOrderQueueNr(page: Page, order: Order): Promise<number> {
+        return await this.checkQueueNr(page, 'https://include.alternate.nl/ryzen5000', 'http://include.alternate.nl/ryzen5000/check.php', order);
     }
 
-    protected async checkAmdGpuOrderQueueNr(page: Page, orderNr: number, zipcode: string): Promise<number> {
-        console.log('Checking AMD GPU order queue');
-        console.log('Order nr:', orderNr);
-        console.log('Zipcode: ', zipcode);
-
-        return this.checkQueueNr(page, 'https://include.alternate.nl/rx6x00', 'https://include.alternate.nl/rx6x00/check.php', orderNr, zipcode);
+    protected async checkAmdGpuOrderQueueNr(page: Page, , order: Order): Promise<number> {
+        return this.checkQueueNr(page, 'https://include.alternate.nl/rx6x00', 'https://include.alternate.nl/rx6x00/check.php', order);
     }
 
-    protected async checkQueueNr(page: Page, url: string, responseUrl: string, orderNr: number, zipcode: string): Promise<number> {
+    protected async checkQueueNr(page: Page, url: string, responseUrl: string, order: Order): Promise<number> {
+        console.log(`Checking ${order.type} order queue`);
+        console.log(`Order nr: ${order.orderNr}`);
+        console.log(`Zipcode: ${order.zipcode}`);
+
         return new Promise(async (resolve, reject) => {
             // Open page
             await page.goto(url);
@@ -114,11 +113,11 @@ export class Application {
 
             // Enter order nr
             await page.focus('#ordernummer');
-            await page.keyboard.type(orderNr.toString());
+            await page.keyboard.type(order.orderNr.toString());
 
             // Enter zipcoe
             await page.focus('#postcode');
-            await page.keyboard.type(zipcode);
+            await page.keyboard.type(order.zipcode);
 
             // Submit
             await page.click('button[type="submit"]');
@@ -128,7 +127,6 @@ export class Application {
                     if(response.status() !== 200) {
                         reject('Invalid response');
                     }
-
 
                     response.json().then(async (data: any) => {
                         // Destructurize the object
@@ -152,7 +150,7 @@ export class Application {
     notifyOnSlack(order: Order): void {
         if(order.slackWebhookUrl && order.slackChannel && order.queueNr) {
             const slack = require('slack-notify')(order.slackWebhookUrl);
-            
+
             slack.note({
                 channel: order.slackChannel,
                 username: 'Alternate Scraper',
@@ -171,14 +169,14 @@ export class Application {
         if(process.env.DISCORD_TOKEN && order.discordUserId && order.queueNr) {
             const Discord = require('discord.js');
             const client = new Discord.Client();
-            
+
             client.on('ready', async () => {
-                let user: User = await client.users.fetch(order.discordUserId);
+                const user: User = await client.users.fetch(order.discordUserId);
                 await user.send(`Order ${order.orderNr} (${order.type}) | Queue nr: ${order.queueNr}`);
-                
+
                 client.destroy();
             });
-            
+
             client.login(process.env.DISCORD_TOKEN);
         }
     }
