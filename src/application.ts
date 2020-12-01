@@ -35,20 +35,25 @@ export class Application {
 
         for(let order of this.data.orders) {
             let queueNr;
+            try {
+                // Get queueNr
+                switch (order.type) {
+                    case 'AMD CPU':
+                        queueNr = await this.checkAmdCpuOrderQueueNr(page, order);
+                    break;
+                    case 'AMD GPU':
+                        queueNr = await this.checkAmdGpuOrderQueueNr(page, order);
+                    break;
+                    case 'Nvidia GPU':
+                        queueNr = await this.checkNvidiaGpuOrderQueueNr(page, order);
+                    break;
+                    default:
+                        return;
+                }
+            } catch (error) {
+                console.error('Error:', error);
 
-            // Get queueNr
-            switch (order.type) {
-                case 'AMD CPU':
-                    queueNr = await this.checkAmdCpuOrderQueueNr(page, order.orderNr, order.zipcode);
-                break;
-                case 'AMD GPU':
-                    queueNr = await this.checkAmdGpuOrderQueueNr(page, order.orderNr, order.zipcode);
-                break;
-                case 'Nvidia GPU':
-                    queueNr = await this.checkNvidiaGpuOrderQueueNr(page, order.orderNr, order.zipcode);
-                break;
-                default:
-                    return;
+                return;
             }
 
             console.log(`Order ${order.orderNr} (${order.type}) | Queue nr: ${queueNr}`);
@@ -62,12 +67,12 @@ export class Application {
 
                 // Send notifications
                 if(order.slackWebhookUrl && order.slackChannel) {
-                    console.log('Should notify on slack');
+                    console.log(`Should notify on Slack`);
                     this.notifyOnSlack(order);
                 }
 
                 if(process.env.DISCORD_TOKEN && order.discordUserId) {
-                    console.log('Should notify on slack');
+                    console.log(`Should notify on Discord`);
 
                     this.notifyOnDiscord(order);
                 }
@@ -79,7 +84,7 @@ export class Application {
         let localISOTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0, -1);
         this.data.lastRun = localISOTime;
 
-        console.log('Last run: ', localISOTime);
+        console.log(`Last run: ${localISOTime}`);
 
         // Store queue nrs in db file
         this.fs.writeFileSync(FILE, JSON.stringify(this.data));
@@ -88,15 +93,15 @@ export class Application {
     }
 
     protected async checkNvidiaGpuOrderQueueNr(page: Page, order: Order): Promise<number> {
-        return this.checkQueueNr(page, 'https://include.alternate.nl/3080', 'http://include.alternate.nl/3080/check.php', order);
+        return await this.checkQueueNr(page, 'https://include.alternate.nl/3080', 'http://include.alternate.nl/3080/check.php', order);
     }
 
     protected async checkAmdCpuOrderQueueNr(page: Page, order: Order): Promise<number> {
         return await this.checkQueueNr(page, 'https://include.alternate.nl/ryzen5000', 'http://include.alternate.nl/ryzen5000/check.php', order);
     }
 
-    protected async checkAmdGpuOrderQueueNr(page: Page, , order: Order): Promise<number> {
-        return this.checkQueueNr(page, 'https://include.alternate.nl/rx6x00', 'https://include.alternate.nl/rx6x00/check.php', order);
+    protected async checkAmdGpuOrderQueueNr(page: Page, order: Order): Promise<number> {
+        return await this.checkQueueNr(page, 'https://include.alternate.nl/rx6x00', 'https://include.alternate.nl/rx6x00/check.php', order);
     }
 
     protected async checkQueueNr(page: Page, url: string, responseUrl: string, order: Order): Promise<number> {
@@ -149,6 +154,8 @@ export class Application {
 
     notifyOnSlack(order: Order): void {
         if(order.slackWebhookUrl && order.slackChannel && order.queueNr) {
+            console.log(`Should notify on Slack v2`);
+
             const slack = require('slack-notify')(order.slackWebhookUrl);
 
             slack.note({
@@ -167,6 +174,8 @@ export class Application {
 
     notifyOnDiscord(order: Order): void {
         if(process.env.DISCORD_TOKEN && order.discordUserId && order.queueNr) {
+            console.log(`Should notify on Discord v2`);
+
             const Discord = require('discord.js');
             const client = new Discord.Client();
 
