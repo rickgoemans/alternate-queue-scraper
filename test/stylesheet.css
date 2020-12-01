@@ -1,0 +1,9 @@
+@font-face {
+    font-family: '';
+    src: url('HiraginoSansGB-W3-Alphabetic.woff2') format('woff2'),
+        url('HiraginoSansGB-W3-Alphabetic.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
