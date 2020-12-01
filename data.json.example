@@ -1,0 +1,29 @@
+{
+    "lastRun":"2020-12-01T09:00:32.320",
+    "orders":[
+        {
+            "type":"Nvidia GPU",
+            "orderNr":123456789,
+            "zipcode":"1234AB",
+            "slackWebhookUrl":"https://hooks.slack.com/services/.../.../...",
+            "slackChannel":"#alternate-scraper",
+            "discordUserId":123456789012345678
+        },
+        {
+            "type":"AMD CPU",
+            "orderNr":123456789,
+            "zipcode":"1234AB",
+            "slackWebhookUrl":"https://hooks.slack.com/services/.../.../...",
+            "slackChannel":"#alternate-scraper",
+            "discordUserId":123456789012345678
+        },
+        {
+            "type":"AMD GPU",
+            "orderNr":123456789,
+            "zipcode":"1234AB",
+            "slackWebhookUrl":"https://hooks.slack.com/services/.../.../...",
+            "slackChannel":"#alternate-scraper",
+            "discordUserId":123456789012345678
+        }
+    ]
+ }

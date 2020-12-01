@@ -31,9 +31,11 @@ Compile the [TypeScript](https://www.typescriptlang.org) code to [JavaScript](ht
 npm run compile
 ```
 
-## 1.3 Setup environment
+## 1.3 Setup orders
 
-Create a `.env` file with your matching details, use `.env.example` as reference.
+If you wish to use Discord notifications, create a `.env` file with your matching details using `.env.example` as reference.
+
+Create a `data.json` file with your matching details using `data.json.example` as reference.
 
 # 2.0 Execution
 
@@ -42,6 +44,8 @@ Execute the program by running
 ```bash
 npm run run
 ```
+
+> If you get errors related to Puppeteer on UNIX not being able to find some shared libraries, check [chrome-headless-doesnt-launch-on-unix](https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#chrome-headless-doesnt-launch-on-unix) and install the missing libraries for your UNIX distribution.
 
 # 3.0 Test
 

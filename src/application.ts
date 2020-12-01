@@ -169,8 +169,6 @@ export class Application {
 
     notifyOnDiscord(order: Order): void {
         if(process.env.DISCORD_TOKEN && order.discordUserId && order.queueNr) {
-            console.log('Should log to discord: ', order.queueNr);
-
             const Discord = require('discord.js');
             const client = new Discord.Client();
             
