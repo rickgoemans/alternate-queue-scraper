@@ -171,6 +171,8 @@ export class Application {
 
                 slack.note({
                     channel: order.slackChannel,
+                    username: 'Alternate Scraper',
+                    icon_emoji: ':compouter:',
                     text: `Queue position update`,
                     fields: {
                         'Queue': order.type,
