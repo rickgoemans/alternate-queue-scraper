@@ -8,9 +8,8 @@ This is a web scraper to automatically check the queue status of your [Alternate
 [1.1 Install software](#11-install-software)   
 [1.2 Install dependencies](#12-install-dependencies)  
 [1.3 Compile](#13-compile)  
-[1.4 Setup environment](#14-setup-environment)  
-[1.5 Setup orders](#15-setup-orders)  
-[1.6 Notifications](#16-notifications)  
+[1.4 Setup orders](#15-setup-orders)  
+[1.5 Notifications](#16-notifications)  
 [2.0 Execution](#20-execution)  
 [3.0 Test](#30-test)
 
@@ -129,7 +128,7 @@ Install the project's dependencies by pasting this in the terminal:
 npm install
 ```
 
-## 1.4 Compile
+## 1.3 Compile
 
 Compile the [TypeScript](https://www.typescriptlang.org) code to [JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript) by pasting this in the terminal:
 
@@ -137,11 +136,11 @@ Compile the [TypeScript](https://www.typescriptlang.org) code to [JavaScript](ht
 npm run compile
 ```
 
-## 1.5 Setup orders
+## 1.4 Setup orders
 
 Create a `data.json` file with your matching details using `data.json.example` as reference.
 
-## 1.6 Notifications
+## 1.5 Notifications
 
 At the moment this project supports two type of notifications:
 
@@ -150,26 +149,32 @@ At the moment this project supports two type of notifications:
 
 **Slack**
 
-In order to use Slack, simply add your your `webhook url` and `channel` to the orders in [step 1.5](#15-setup-orders) and you're good to go.
+In order to use Slack, create a webhook by going `https://{your-workspace}.slack.com/apps/manage/custom-integrations`, make sure to replace `{your-workspace}` with your workspace. 
+
+Next, click on `Incoming Webhooks`. Add a new configuration by clicking `Add to Slack`. 
+
+Select (or create) a channel to post to, give it a label, name, icon and click `Save settings`. 
+
+Next copy the `Webhook URL` to the orders in [step 1.4](#14-setup-orders) and you're good to go.
 
 **Discord**
 
-If you wish to use Discord notifications, you should first create an application by going to the [Discord developer portal](https://discord.com/developers/applications), logging in, and click `New application`. Name it however you want and give it an icon (you can take `assets/images/alternate_scraper_icon.png`).
+If you wish to use Discord notifications, you should first create an application by going to the [Discord developer portal](https://discord.com/developers/applications), logging in, and click `New application`.
 
+ Name it however you want and give it an icon (you can use `assets/images/alternate_scraper_icon.png` if you want to).
 ![Alternate scraper logo](./assets/images/alternate_scraper_icon.png)
 
 The next step is creating a bot by clicking `Bot` on the left. Give the bot a name and icon just like before.
+> Make sure `public bot` is **TURNED ON** and `Requires Oauth2 code grant` is **TURNED OFF**. And you don't have to select any permissions because it will send direct messages.
 
-> Make sure you `public bot` is **TURNED ON** and `Requires Oauth2 code grant` is **TURNED OFF**. And you don't have to select any permissions because it will send direct messages.
+Invite the bot to a server by click `Oauth2` on the left. Make sure you click the enable `bot` in the `scopes` section, once again, you don't have to select any permissions. Next, copy the shown URL and paste it in your in the URL bar of your browser.
 
 > In order for the bot to be able to direct message someone, the bot and the user must **AT LEAST** share one server.
-
-Invite the bot by click `Oauth2` on the left. Make sure you click the enable `bot` in the `scopes` section, once again, you don't have to select any permissions. Next, copy the shown URL and paste it in your in the URL bar of your browser.
 
  Next, create a `.env` file using `.env.example` as reference and replace `DISCORD_TOKEN='...'` with your own bot token.
 
 The last step is adding a Discord user's ID. You can retrieve a user's ID by going to the Discord application (or browser), open the settings, go to `Appearance` and make sure to enable `developer mode`. Next right click on a user and click `Copy ID`. 
-Add the ID to the orders in [step 1.5](#15-setup-orders) and you're good to go.
+Add the ID to the orders in [step 1.4](#14-setup-orders) and you're good to go.
 
 # 2.0 Execution
 
