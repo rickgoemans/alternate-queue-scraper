@@ -4,10 +4,10 @@ export class Order {
     zipcode: string;
     slackWebhookUrl?: string;
     slackChannel?: string;
-    discordUserId?: number;
+    discordUserId?: string;
     queueNr?: number;
 
-    constructor(type: OrderType, orderNr: number, zipcode: string, slackWebhookUrl?: string, slackChannel?: string, discordUserId?: number) {
+    constructor(type: OrderType, orderNr: number, zipcode: string, slackWebhookUrl?: string, slackChannel?: string, discordUserId?: string) {
         this.type = type;
         this.orderNr = orderNr;
         this.zipcode = zipcode;

@@ -1,6 +1,7 @@
-import { User } from 'discord.js';
+import { Client, User } from 'discord.js';
 import puppeteer, { Page } from 'puppeteer';
 import { Order } from './models/order.model';
+import fs from 'fs';
 
 const FILE = 'data.json';
 
@@ -9,32 +10,23 @@ export class Application {
         orders: Order[],
         lastRun: string,
     };
-    protected discordClient: any;
-    protected fs: any;
-    protected discordOrdersToNotify: Order[] = [];
-    protected slackOrdersToNotify: Order[] = [];
+    protected discordClient: Client = new Client();
+    protected ordersToNotifyOnDiscord: Order[] = [];
+    protected ordersToNotifyOnSlack: Order[] = [];
 
     constructor() {
-        this.fs = require('fs');
-
         // Create db file if it does not exist
-        if(!this.fs.existsSync(FILE)) {
+        if(!fs.existsSync(FILE)) {
             const obj: any = {
                 lastRun: 'INIT',
                 orders: [],
             };
 
-            this.fs.writeFileSync(FILE, JSON.stringify(obj));
+            fs.writeFileSync(FILE, JSON.stringify(obj));
         }
 
         // Load db file
-        this.data = JSON.parse(this.fs.readFileSync(FILE));
-
-        // Setup Discord
-        if(process.env.DISCORD_TOKEN) {
-            const Discord = require('discord.js');
-            this.discordClient = new Discord.Client();
-        }
+        this.data = JSON.parse(fs.readFileSync(FILE).toString());
     }
 
     public async run (): Promise<void> {
@@ -44,6 +36,7 @@ export class Application {
 
         for(let order of this.data.orders) {
             let queueNr;
+
             try {
                 // Get queueNr
                 switch (order.type) {
@@ -57,18 +50,18 @@ export class Application {
                         queueNr = await this.checkNvidiaGpuOrderQueueNr(page, order);
                     break;
                     default:
-                        return;
+                        continue;
                 }
             } catch (error) {
                 console.error('Error:', error);
 
-                return;
+                continue;
             }
 
             console.log(`Order ${order.orderNr} (${order.type}) | Queue nr: ${queueNr}`);
 
             if(isNaN(queueNr)) {
-                return;
+                continue;
             }
 
             if(order.queueNr === undefined || order.queueNr !== queueNr) {
@@ -76,21 +69,21 @@ export class Application {
 
                 // Store notifications
                 if(order.slackWebhookUrl && order.slackChannel) {
-                    this.slackOrdersToNotify.push(order);
+                    this.ordersToNotifyOnSlack.push(order);
                 }
 
                 if(order.discordUserId) {
-                    this.discordOrdersToNotify.push(order);
+                    this.ordersToNotifyOnDiscord.push(order);
                 }
             }
         }
 
-        if(this.slackOrdersToNotify.length) {
-            this.notifyOnSlack(this.slackOrdersToNotify);
+        if(this.ordersToNotifyOnSlack.length) {
+            this.notifyOnSlack(this.ordersToNotifyOnSlack);
         }
 
-        if(this.discordOrdersToNotify.length) {
-            this.notifyOnDiscord(this.discordOrdersToNotify);
+        if(this.ordersToNotifyOnDiscord.length) {
+            this.notifyOnDiscord(this.ordersToNotifyOnDiscord);
         }
 
         // Store last run
@@ -103,7 +96,12 @@ export class Application {
         // Store data back in db file
         this.fs.writeFileSync(FILE, JSON.stringify(this.data));
 
-        process.exit();
+        // Close app after some time to ensure (Discord) notifications are sent
+        setTimeout(() => {
+            console.log('Closing...');
+
+            process.exit();
+        }, 3000);
     }
 
     protected async checkNvidiaGpuOrderQueueNr(page: Page, order: Order): Promise<number> {
@@ -185,8 +183,9 @@ export class Application {
     }
 
     notifyOnDiscord(orders: Order[]): void {
-        if(this.discordClient !== undefined) {
+        if(process.env.DISCORD_TOKEN) {
             this.discordClient.on('ready', async () => {
+                // Send messages
                 for(const order of orders) {
                     if(order.discordUserId && order.queueNr) {
                         try {
@@ -199,8 +198,12 @@ export class Application {
                         }
                     }
                 }
+
+                // Cleanup
+                this.discordClient.destroy();
             });
 
+            // Login
             this.discordClient.login(process.env.DISCORD_TOKEN);
         }
     }
