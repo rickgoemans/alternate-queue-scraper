@@ -94,7 +94,7 @@ export class Application {
         console.log(`Last run: ${localISOTime}`);
 
         // Store data back in db file
-        this.fs.writeFileSync(FILE, JSON.stringify(this.data));
+        fs.writeFileSync(FILE, JSON.stringify(this.data));
 
         // Close app after some time to ensure (Discord) notifications are sent
         setTimeout(() => {
