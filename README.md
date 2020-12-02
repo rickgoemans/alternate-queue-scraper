@@ -162,6 +162,7 @@ Next copy the `Webhook URL` to the orders in [step 1.4](#14-setup-orders) and yo
 If you wish to use Discord notifications, you should first create an application by going to the [Discord developer portal](https://discord.com/developers/applications), logging in, and click `New application`.
 
  Name it however you want and give it an icon (you can use `assets/images/alternate_scraper_icon.png` if you want to).
+ 
 ![Alternate scraper logo](./assets/images/alternate_scraper_icon.png)
 
 The next step is creating a bot by clicking `Bot` on the left. Give the bot a name and icon just like before.
