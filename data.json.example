@@ -7,7 +7,7 @@
             "zipcode":"1234AB",
             "slackWebhookUrl":"https://hooks.slack.com/services/.../.../...",
             "slackChannel":"#alternate-scraper",
-            "discordUserId":123456789012345678
+            "discordUserId":"123456789012345678"
         },
         {
             "type":"AMD CPU",
@@ -15,7 +15,7 @@
             "zipcode":"1234AB",
             "slackWebhookUrl":"https://hooks.slack.com/services/.../.../...",
             "slackChannel":"#alternate-scraper",
-            "discordUserId":123456789012345678
+            "discordUserId":"123456789012345678"
         },
         {
             "type":"AMD GPU",
@@ -23,7 +23,7 @@
             "zipcode":"1234AB",
             "slackWebhookUrl":"https://hooks.slack.com/services/.../.../...",
             "slackChannel":"#alternate-scraper",
-            "discordUserId":123456789012345678
+            "discordUserId":"123456789012345678"
         }
     ]
  }
