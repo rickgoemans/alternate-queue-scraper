@@ -146,18 +146,34 @@ export class Application {
                     }
 
                     response.json().then(async (data: any) => {
-                        // Destructurize the object
-                        const {a, b, c, d} = data;
-                        let slots = [
-                            a,
-                            b,
-                            c,
-                            d,
-                        ];
-                        slots = slots.map(nr => nr - 2);
-                        const queueNr = parseInt(slots.join(''), 10);
+                        if(data.hasOwnProperty('a')
+                            && data.hasOwnProperty('b')
+                            && data.hasOwnProperty('c')
+                            && data.hasOwnProperty('d')
+                            ) {
+                            // Destructurize the object
+                            const {a, b, c, d} = data;
+                            let slots = [
+                                a,
+                                b,
+                                c,
+                                d,
+                            ];
+                            slots = slots.map(nr => nr - 2);
+                            const queueNr = parseInt(slots.join(''), 10);
 
-                        resolve(queueNr);
+                            resolve(queueNr);
+                            }
+
+                        if(data.hasOwnProperty('error')) {
+                            if(data.error === 'Deze order is reeds verzonden. Het wachten is voorbij!') {
+                                resolve(0);
+                            }
+
+                            reject(`Error: ${data.error}`);
+                        };
+
+                        reject('Error: unknown response from check');
                     });
                 }
             });
